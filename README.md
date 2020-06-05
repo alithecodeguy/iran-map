@@ -4,6 +4,10 @@
 
 [![NPM](https://img.shields.io/npm/v/iran-map.svg)](https://www.npmjs.com/package/iran-map) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
+<div align="center">
+    <img src="./InteractiveIranMap1.gif" width="250">
+</div>
+
 ## Install
 
 ```bash
@@ -13,21 +17,21 @@ npm install --save iran-map
 ## Usage
 
 ```jsx
-import React, { Component } from "react";
+import React, { Component } from 'react'
 
-import InteractiveIranMap from "iran-map";
-import "iran-map/dist/index.css";
-import yourData from "./yourData";
+import InteractiveIranMap from 'iran-map'
+import 'iran-map/dist/index.css'
+import yourData from './yourData'
 
 class Example extends Component {
   render() {
     return (
       <InteractiveIranMap
         height={600} // default value is 600px
-        selectedArea={"tehran"} // default value is "tehran
+        selectedArea={'tehran'} // default value is "tehran
         data={yourData} // default value for all areas is 0
       />
-    );
+    )
   }
 }
 ```
@@ -81,10 +85,10 @@ const yourData = {
   siri: 0,
   abumusa: 0,
   tonbebozorg: 0,
-  tonbekuchak: 0,
-};
+  tonbekuchak: 0
+}
 
-export default yourData;
+export default yourData
 ```
 
 ## License
