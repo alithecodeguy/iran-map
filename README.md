@@ -28,7 +28,7 @@ class Example extends Component {
     return (
       <InteractiveIranMap
         height={600} // default value is 600px
-        selectedArea={'tehran'} // default value is "tehran
+        selectedArea={'tehran'} // default value is "tehran"
         data={yourData} // default value for all areas is 0
       />
     )
