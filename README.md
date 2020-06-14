@@ -5,7 +5,7 @@
 [![NPM](https://img.shields.io/npm/v/iran-map.svg)](https://www.npmjs.com/package/iran-map) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 <div align="center">
-    <img src="./InteractiveIranMap1.gif" width="250">
+    <img src="./iran-map.gif" width="250">
 </div>
 
 ## Install
@@ -29,7 +29,12 @@ class Example extends Component {
       <InteractiveIranMap
         height={600} // default value is 600px
         selectedArea={'tehran'} // default value is tehran
-        data={yourData} // default value for all areas is 0
+        defaultAreasColor='120,160,51' // default value is '255,255,0'
+        selectedAreaColor='#aaf' // default value is '#00f'
+        selectedAreaTextColor='#abc' // deafult value is '#fff'
+        unselectedAreaTextColor='#a1f' // default value is '#000'
+        backgroundColor='#ab0' // default value is '#fff'
+        data={yourData} // default value for all areas is based on test data bleow as "yourData"
       />
     )
   }

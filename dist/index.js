@@ -1594,7 +1594,7 @@ var IranMap = function IranMap(props) {
       },
       "data-tip": "" + props.data[iranState.name],
       "data-for": iranState.name + "Tooltip",
-      fill: props.selectedArea === iranState.name ? props.selectedAreaColor : props.defaultAreasColor,
+      fill: props.selectedArea === iranState.name ? props.selectedAreaColor : "rgba(" + props.defaultAreasColor + "," + props.data[iranState.name] / props.maxValue,
       stroke: "#9B9B9B",
       style: {
         cursor: 'pointer'
@@ -1628,7 +1628,7 @@ var IranMap = function IranMap(props) {
       },
       "data-tip": "" + props.data[iranIsland.name],
       "data-for": iranIsland.name + "Tooltip",
-      fill: props.selectedArea === iranIsland.name ? props.selectedAreaColor : props.defaultAreasColor,
+      fill: props.selectedArea === iranIsland.name ? props.selectedAreaColor : "rgba(" + props.defaultAreasColor + "," + props.data[iranIsland.name] / props.maxValue,
       stroke: "#9B9B9B",
       points: iranIsland.points
     });
@@ -1641,6 +1641,7 @@ var IranMap = function IranMap(props) {
       onClick: function onClick() {
         return props.onClick(iranState);
       },
+      fill: props.selectedArea === iranState.name ? props.selectedAreaTextColor : '#000',
       style: {
         fontSize: 16,
         fontWeight: 'bold',
@@ -1657,6 +1658,7 @@ var IranMap = function IranMap(props) {
       textAnchor: "start",
       x: "" + iranSea.ltrX,
       y: "" + iranSea.ltrY,
+      fill: props.selectedArea === iranSea.name ? props.selectedAreaTextColor : '#000',
       onClick: function onClick() {
         return props.onClick(iranSea);
       },
@@ -1699,64 +1701,59 @@ IranMap.propTypes = {
   backgroundColor: propTypes.string,
   onClick: propTypes.func.isRequired,
   selectedArea: propTypes.string.isRequired,
-  useTestData: propTypes.bool,
   defaultAreasColor: propTypes.string,
-  selectedAreaColor: propTypes.string
-};
-IranMap.defaultProps = {
-  defaultAreasColor: '#fff',
-  selectedAreaColor: 'red',
-  backgroundColor: 'white',
-  useTestData: false
+  selectedAreaColor: propTypes.string,
+  selectedAreaTextColor: propTypes.string,
+  unselectedAreaTextColor: propTypes.string
 };
 
 var testData = {
-  alborz: 0,
-  ardebil: 0,
-  azerbaijansharghi: 0,
-  azerbaijangharbi: 0,
-  bushehr: 0,
-  chvab: 0,
-  fars: 0,
-  gilan: 0,
-  golestan: 0,
-  hamedan: 0,
-  hormozgan: 0,
-  ilam: 0,
-  esfehan: 0,
-  kerman: 0,
-  kermanshah: 0,
-  khorasanshomali: 0,
-  khorasanrazavi: 0,
-  khorasanjunubi: 0,
-  khuzestan: 0,
-  kvab: 0,
-  kordestan: 0,
-  lorestan: 0,
-  markazi: 0,
-  mazandaran: 0,
-  ghazvin: 0,
-  ghom: 0,
-  semnan: 0,
-  svab: 0,
-  tehran: 0,
-  yazd: 0,
-  zanjan: 0,
-  khazar: 0,
-  khalijefars: 0,
-  khark: 0,
-  kish: 0,
-  hormoz: 0,
-  gheshm: 0,
-  lark: 0,
-  lavan: 0,
-  faror: 0,
-  hendorabi: 0,
-  hengam: 0,
-  siri: 0,
-  abumusa: 0,
-  tonbebozorg: 0,
-  tonbekuchak: 0
+  alborz: 10,
+  ardebil: 20,
+  azerbaijansharghi: 30,
+  azerbaijangharbi: 40,
+  bushehr: 34,
+  chvab: 67,
+  fars: 12,
+  gilan: 1,
+  golestan: 54,
+  hamedan: 67,
+  hormozgan: 32,
+  ilam: 66,
+  esfehan: 42,
+  kerman: 13,
+  kermanshah: 12,
+  khorasanshomali: 1,
+  khorasanrazavi: 30,
+  khorasanjunubi: 78,
+  khuzestan: 55,
+  kvab: 7,
+  kordestan: 43,
+  lorestan: 45,
+  markazi: 2,
+  mazandaran: 33,
+  ghazvin: 18,
+  ghom: 29,
+  semnan: 23,
+  svab: 61,
+  tehran: 56,
+  yazd: 17,
+  zanjan: 77,
+  khazar: 54,
+  khalijefars: 41,
+  khark: 61,
+  kish: 34,
+  hormoz: 48,
+  gheshm: 58,
+  lark: 4,
+  lavan: 55,
+  faror: 23,
+  hendorabi: 21,
+  hengam: 4,
+  siri: 2,
+  abumusa: 34,
+  tonbebozorg: 12,
+  tonbekuchak: 53
 };
 
 var InteractiveIranMap = function InteractiveIranMap(_ref) {
@@ -1764,6 +1761,16 @@ var InteractiveIranMap = function InteractiveIranMap(_ref) {
       data = _ref$data === void 0 ? testData : _ref$data,
       _ref$height = _ref.height,
       height = _ref$height === void 0 ? 600 : _ref$height,
+      _ref$defaultAreasColo = _ref.defaultAreasColor,
+      defaultAreasColor = _ref$defaultAreasColo === void 0 ? '255,0,0' : _ref$defaultAreasColo,
+      _ref$selectedAreaColo = _ref.selectedAreaColor,
+      selectedAreaColor = _ref$selectedAreaColo === void 0 ? '#00f' : _ref$selectedAreaColo,
+      _ref$selectedAreaText = _ref.selectedAreaTextColor,
+      selectedAreaTextColor = _ref$selectedAreaText === void 0 ? '#fff' : _ref$selectedAreaText,
+      _ref$unselectedAreaTe = _ref.unselectedAreaTextColor,
+      unselectedAreaTextColor = _ref$unselectedAreaTe === void 0 ? '#000' : _ref$unselectedAreaTe,
+      _ref$backgroundColor = _ref.backgroundColor,
+      backgroundColor = _ref$backgroundColor === void 0 ? '#fff' : _ref$backgroundColor,
       _ref$defaultSelectedA = _ref.defaultSelectedArea,
       defaultSelectedArea = _ref$defaultSelectedA === void 0 ? 'tehran' : _ref$defaultSelectedA;
 
@@ -1781,12 +1788,20 @@ var InteractiveIranMap = function InteractiveIranMap(_ref) {
     });
   };
 
-  return /*#__PURE__*/React.createElement(IranMap, {
+  var arr = Object.values(data);
+  var max = Math.max.apply(Math, arr);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(IranMap, {
     onClick: selectAreaHandler,
     height: height,
+    data: data,
+    maxValue: max,
     selectedArea: state.selectedArea,
-    data: data
-  });
+    defaultAreasColor: defaultAreasColor,
+    selectedAreaColor: selectedAreaColor,
+    selectedAreaTextColor: selectedAreaTextColor,
+    unselectedAreaTextColor: unselectedAreaTextColor,
+    backgroundColor: backgroundColor
+  }));
 };
 
 module.exports = InteractiveIranMap;

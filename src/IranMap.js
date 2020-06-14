@@ -38,7 +38,9 @@ const IranMap = (props) => {
               fill={
                 props.selectedArea === iranState.name
                   ? props.selectedAreaColor
-                  : props.defaultAreasColor
+                  : `rgba(${props.defaultAreasColor},${
+                      props.data[iranState.name] / props.maxValue
+                    }`
               }
               stroke='#9B9B9B'
               style={{ cursor: 'pointer' }}
@@ -75,7 +77,9 @@ const IranMap = (props) => {
               fill={
                 props.selectedArea === iranIsland.name
                   ? props.selectedAreaColor
-                  : props.defaultAreasColor
+                  : `rgba(${props.defaultAreasColor},${
+                      props.data[iranIsland.name] / props.maxValue
+                    }`
               }
               stroke='#9B9B9B'
               points={iranIsland.points}
@@ -89,6 +93,11 @@ const IranMap = (props) => {
             x={`${iranState.ltrX}`}
             y={`${iranState.ltrY}`}
             onClick={() => props.onClick(iranState)}
+            fill={
+              props.selectedArea === iranState.name
+                ? props.selectedAreaTextColor
+                : '#000'
+            }
             style={{
               fontSize: 16,
               fontWeight: 'bold',
@@ -109,6 +118,11 @@ const IranMap = (props) => {
             textAnchor='start'
             x={`${iranSea.ltrX}`}
             y={`${iranSea.ltrY}`}
+            fill={
+              props.selectedArea === iranSea.name
+                ? props.selectedAreaTextColor
+                : '#000'
+            }
             onClick={() => props.onClick(iranSea)}
             style={{
               fontSize: 16,
@@ -160,16 +174,18 @@ IranMap.propTypes = {
   backgroundColor: PropTypes.string,
   onClick: PropTypes.func.isRequired,
   selectedArea: PropTypes.string.isRequired,
-  useTestData: PropTypes.bool,
   defaultAreasColor: PropTypes.string,
-  selectedAreaColor: PropTypes.string
+  selectedAreaColor: PropTypes.string,
+  selectedAreaTextColor: PropTypes.string,
+  unselectedAreaTextColor: PropTypes.string
 }
 
-IranMap.defaultProps = {
-  defaultAreasColor: '#fff',
-  selectedAreaColor: 'red',
-  backgroundColor: 'white',
-  useTestData: false
-}
+// IranMap.defaultProps = {
+//   defaultAreasColor: '255,0,0',
+//   selectedAreaColor: '#00f',
+//   selectedAreaTextColor: '#fff',
+//   unselectedAreaTextColor: '#000',
+//   backgroundColor: '#fff'
+// }
 
 export default IranMap

@@ -4,6 +4,11 @@ import testData from './test-data.js'
 const InteractiveIranMap = ({
   data = testData,
   height = 600,
+  defaultAreasColor = '255,0,0',
+  selectedAreaColor = '#00f',
+  selectedAreaTextColor = '#fff',
+  unselectedAreaTextColor = '#000',
+  backgroundColor = '#fff',
   defaultSelectedArea = 'tehran'
 }) => {
   const [state, setState] = React.useState({
@@ -12,13 +17,25 @@ const InteractiveIranMap = ({
   const selectAreaHandler = (area) => {
     setState((prevState) => ({ ...prevState, selectedArea: area.name }))
   }
+
+  let arr = Object.values(data)
+  let max = Math.max(...arr)
+
   return (
-    <IranMap
-      onClick={selectAreaHandler}
-      height={height}
-      selectedArea={state.selectedArea}
-      data={data}
-    />
+    <div>
+      <IranMap
+        onClick={selectAreaHandler}
+        height={height}
+        data={data}
+        maxValue={max}
+        selectedArea={state.selectedArea}
+        defaultAreasColor={defaultAreasColor}
+        selectedAreaColor={selectedAreaColor}
+        selectedAreaTextColor={selectedAreaTextColor}
+        unselectedAreaTextColor={unselectedAreaTextColor}
+        backgroundColor={backgroundColor}
+      />
+    </div>
   )
 }
 
