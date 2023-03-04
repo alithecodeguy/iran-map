@@ -1,6 +1,21 @@
 import React from 'react';
 import ReactTooltip from 'react-tooltip';
 
+function _extends() {
+  _extends = Object.assign ? Object.assign.bind() : function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+    return target;
+  };
+  return _extends.apply(this, arguments);
+}
+
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
@@ -333,12 +348,14 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 var ReactPropTypesSecret_1 = ReactPropTypesSecret;
 
+var has = Function.call.bind(Object.prototype.hasOwnProperty);
+
 var printWarning = function() {};
 
 if (process.env.NODE_ENV !== 'production') {
   var ReactPropTypesSecret$1 = ReactPropTypesSecret_1;
   var loggedTypeFailures = {};
-  var has = Function.call.bind(Object.prototype.hasOwnProperty);
+  var has$1 = has;
 
   printWarning = function(text) {
     var message = 'Warning: ' + text;
@@ -350,7 +367,7 @@ if (process.env.NODE_ENV !== 'production') {
       // This error was thrown as a convenience so that you can use this stack
       // to find the callsite that caused this warning to fire.
       throw new Error(message);
-    } catch (x) {}
+    } catch (x) { /**/ }
   };
 }
 
@@ -368,7 +385,7 @@ if (process.env.NODE_ENV !== 'production') {
 function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
   if (process.env.NODE_ENV !== 'production') {
     for (var typeSpecName in typeSpecs) {
-      if (has(typeSpecs, typeSpecName)) {
+      if (has$1(typeSpecs, typeSpecName)) {
         var error;
         // Prop type validation may throw. In case they do, we don't want to
         // fail the render phase where it didn't fail before. So we log it.
@@ -379,7 +396,8 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
           if (typeof typeSpecs[typeSpecName] !== 'function') {
             var err = Error(
               (componentName || 'React class') + ': ' + location + ' type `' + typeSpecName + '` is invalid; ' +
-              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.'
+              'it must be a function, usually from the `prop-types` package, but received `' + typeof typeSpecs[typeSpecName] + '`.' +
+              'This often happens because of typos such as `PropTypes.function` instead of `PropTypes.func`.'
             );
             err.name = 'Invariant Violation';
             throw err;
@@ -427,7 +445,6 @@ checkPropTypes.resetWarningCache = function() {
 
 var checkPropTypes_1 = checkPropTypes;
 
-var has$1 = Function.call.bind(Object.prototype.hasOwnProperty);
 var printWarning$1 = function() {};
 
 if (process.env.NODE_ENV !== 'production') {
@@ -528,6 +545,7 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
   // Keep this list in sync with production version in `./factoryWithThrowingShims.js`.
   var ReactPropTypes = {
     array: createPrimitiveTypeChecker('array'),
+    bigint: createPrimitiveTypeChecker('bigint'),
     bool: createPrimitiveTypeChecker('boolean'),
     func: createPrimitiveTypeChecker('function'),
     number: createPrimitiveTypeChecker('number'),
@@ -573,8 +591,9 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
    * is prohibitively expensive if they are created too often, such as what
    * happens in oneOfType() for any type before the one that matched.
    */
-  function PropTypeError(message) {
+  function PropTypeError(message, data) {
     this.message = message;
+    this.data = data && typeof data === 'object' ? data: {};
     this.stack = '';
   }
   // Make `instanceof Error` still work for returned errors.
@@ -609,7 +628,7 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
           ) {
             printWarning$1(
               'You are manually calling a React.PropTypes validation ' +
-              'function for the `' + propFullName + '` prop on `' + componentName  + '`. This is deprecated ' +
+              'function for the `' + propFullName + '` prop on `' + componentName + '`. This is deprecated ' +
               'and will throw in the standalone `prop-types` package. ' +
               'You may be seeing this warning due to a third-party PropTypes ' +
               'library. See https://fb.me/react-warning-dont-call-proptypes ' + 'for details.'
@@ -648,7 +667,10 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
         // 'of type `object`'.
         var preciseType = getPreciseType(propValue);
 
-        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'));
+        return new PropTypeError(
+          'Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'),
+          {expectedType: expectedType}
+        );
       }
       return null;
     }
@@ -762,7 +784,7 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
         return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
       }
       for (var key in propValue) {
-        if (has$1(propValue, key)) {
+        if (has(propValue, key)) {
           var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret_1);
           if (error instanceof Error) {
             return error;
@@ -792,14 +814,19 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
     }
 
     function validate(props, propName, componentName, location, propFullName) {
+      var expectedTypes = [];
       for (var i = 0; i < arrayOfTypeCheckers.length; i++) {
         var checker = arrayOfTypeCheckers[i];
-        if (checker(props, propName, componentName, location, propFullName, ReactPropTypesSecret_1) == null) {
+        var checkerResult = checker(props, propName, componentName, location, propFullName, ReactPropTypesSecret_1);
+        if (checkerResult == null) {
           return null;
         }
+        if (checkerResult.data && has(checkerResult.data, 'expectedType')) {
+          expectedTypes.push(checkerResult.data.expectedType);
+        }
       }
-
-      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`.'));
+      var expectedTypesMessage = (expectedTypes.length > 0) ? ', expected one of type [' + expectedTypes.join(', ') + ']': '';
+      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`' + expectedTypesMessage + '.'));
     }
     return createChainableTypeChecker(validate);
   }
@@ -814,6 +841,13 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
     return createChainableTypeChecker(validate);
   }
 
+  function invalidValidatorError(componentName, location, propFullName, key, type) {
+    return new PropTypeError(
+      (componentName || 'React class') + ': ' + location + ' type `' + propFullName + '.' + key + '` is invalid; ' +
+      'it must be a function, usually from the `prop-types` package, but received `' + type + '`.'
+    );
+  }
+
   function createShapeTypeChecker(shapeTypes) {
     function validate(props, propName, componentName, location, propFullName) {
       var propValue = props[propName];
@@ -823,8 +857,8 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
       }
       for (var key in shapeTypes) {
         var checker = shapeTypes[key];
-        if (!checker) {
-          continue;
+        if (typeof checker !== 'function') {
+          return invalidValidatorError(componentName, location, propFullName, key, getPreciseType(checker));
         }
         var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret_1);
         if (error) {
@@ -843,16 +877,18 @@ var factoryWithTypeCheckers = function(isValidElement, throwOnDirectAccess) {
       if (propType !== 'object') {
         return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
       }
-      // We need to check all keys in case some are required but missing from
-      // props.
+      // We need to check all keys in case some are required but missing from props.
       var allKeys = objectAssign({}, props[propName], shapeTypes);
       for (var key in allKeys) {
         var checker = shapeTypes[key];
+        if (has(shapeTypes, key) && typeof checker !== 'function') {
+          return invalidValidatorError(componentName, location, propFullName, key, getPreciseType(checker));
+        }
         if (!checker) {
           return new PropTypeError(
             'Invalid ' + location + ' `' + propFullName + '` key `' + key + '` supplied to `' + componentName + '`.' +
             '\nBad object: ' + JSON.stringify(props[propName], null, '  ') +
-            '\nValid keys: ' +  JSON.stringify(Object.keys(shapeTypes), null, '  ')
+            '\nValid keys: ' + JSON.stringify(Object.keys(shapeTypes), null, '  ')
           );
         }
         var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret_1);
@@ -1028,6 +1064,7 @@ var factoryWithThrowingShims = function() {
   // Keep this list in sync with production version in `./factoryWithTypeCheckers.js`.
   var ReactPropTypes = {
     array: shim,
+    bigint: shim,
     bool: shim,
     func: shim,
     number: shim,
@@ -1078,7 +1115,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 });
 
-const iransStatesProperties = [{
+var iransStatesProperties = [{
   id: "b1",
   parentId: "a1",
   name: "alborz",
@@ -1390,7 +1427,7 @@ const iransStatesProperties = [{
   d: "M311.8,315.4c-1.1,0-2.2-0.5-3.1-1.4c-0.7-0.7-1.5-1-2.4-1c-0.9,0-1.8,0.3-2.7,0.6c-0.9,0.3-1.8,0.5-2.6,0.5c-1.2,0-2.2-0.7-3.3-1.6c-1.3-1-2.8-2.2-5.3-2.4c-3.9-0.4-7.1-2-7.9-2.4l-0.2-0.1l-0.1-0.2c-0.4-0.5-3.5-5-4.4-6.4c-1.1-1.6-4.1-1.9-5.8-1.9c-2.8,0-3.3-2.4-3.7-4.7c-0.4-1.8-0.7-1.8-2.1-1.8c-0.2,0-0.4,0-0.7,0c-0.5,0-0.9,0-1.5,0c-0.7,0-1.3-0.2-1.7-0.7c-1-1.1-0.7-3.3-0.3-5.6c0.1-0.6,0.2-1.1,0.2-1.4c0-1.5,0.4-3.2,3.7-4.2c0.5-0.2,0.9-0.5,1.1-1c0.6-1.4-0.2-3.9-0.7-5.1l-0.1-0.1c-0.3-0.4-0.8-2.1-0.6-2.9c0.2-0.6,0.1-1.6,0.1-2.2c0-0.1,0-0.3,0-0.3c0-1.2,0-1.4-0.1-1.4c0-0.1-0.1-0.3-0.2-0.6c-0.3-0.8-0.7-1.6-0.8-2.1c-0.2-0.7-0.7-1.7-1-1.9c-0.2,0-1.8-0.3-4.6-0.3c-2.8,0-6.2-0.8-10.1-2.5c-0.8-0.3-1.7-0.8-2.7-1.4c-2.2-1.2-4.5-2.4-6.1-2.4c-0.3,0-0.6,0-0.8,0.1c-0.5,0.2-0.8,0.5-1,1c-0.4,1-1.1,1.7-2,2c-0.4,0.1-0.9,0.2-1.3,0.2l0,0c-1,0-1.8-0.3-2.3-0.5l-0.6-0.3l0-0.7c0-1.2-0.1-2.5-0.3-3.4c-0.5-2.5-3-11.4-4-14c-0.8-2.1-2.8-8-3.6-10.5l-0.1-0.3l0.1-0.3c0.5-1.4,3-8.6,9.5-8.9c5.3-0.3,6.7-2.5,7.7-4.1c0.3-0.5,0.5-0.9,0.8-1.2c1.4-1.4,3.1-2.4,5.1-3.1c1.9-0.6,7.6-3.3,8.6-4.3c0.5-0.5,3.4-2.8,6.2-2.8c0.9,0,1.8,0.2,2.5,0.7c2.2,1.5,4.4,2.2,6.5,2.2c0.7,0,1.4-0.1,2-0.2c2.6-0.7,4.9-3.3,5.5-4.2c0.7-1.1,2.9-1.8,4.1-2.1c0.9-0.2,3.6-1.6,5.4-2.5l-1.7-3.2l5.3,3.4c0.5-0.1,1-0.1,1.6-0.1c1.3,0,1.6,0.2,1.8,0.3l0.2,0.1l0.1,0.2c0.4,0.6,0.8,1.5,1,1.8l3,0.8l0.2,0.3c0.3,0.5,0.9,1.4,0.9,2.1c0,0.6,0.5,1.9,1.8,2.3c0.3,0.1,0.6,0.2,0.9,0.3c0.5,0.2,1,0.3,1.4,0.3c0.4,0,0.6-0.1,0.9-0.4c1.2-1.2,2.9-2.7,4.2-2.7c0.2,0,0.4,0,0.5,0.1c0.5,0.2,1.5,0.3,2.4,0.3c1.4,0.1,2.8,0.2,3.6,0.7c0.1,0.1,0.5,0.3,1.5,0.3c1.5,0,3.4-0.5,4.3-1.1l0.7-0.4l0.6,0.6c0.4,0.5,0.8,0.7,0.9,0.8l0.1,0l0.1,0.1c2.6,2.6,11.2,11.2,12.5,13c1.5,1.9,5.2,10.7,5.5,11.5c0.3,0.3,2.8,2.8,5,5.1l1.6,1.7l-3.9,0c-0.3,0-0.9,0.1-1.5,0.1c-0.5,0-0.9,0-1.2-0.1c-1.1-0.2-2.1-0.8-2.6-1.7c-0.5-0.8-1.9-1-3.2-1.2c-1.1-0.1-3.4-1-4-1.3l-2.6,3.6l0,0.1c-0.2,0.7-2,6-3,7.5c-0.9,1.4,0.1,5.4,1.5,8.3c1.4,2.7,4.8,3.3,7.8,3.8l0.5,0.1c2.2,0.4,4.1,1.2,5.9,2.1c0.7,0.3,1.5,0.7,2.2,1c2,0.8,3.4,2.3,4.1,4.7l0.3,0.8c0.9,2.5,1.7,5.2,1.7,6.8c0,1.4-1,4.9-2.2,8.7l0,0.1c-0.4,1.2-0.7,2.2-0.8,2.7c-0.5,2-4.4,4.2-8.7,4.7c-2.8,0.3-3.5,1.9-4.3,3.6c-0.3,0.6-0.6,1.3-1,1.9c-0.5,0.7-1.2,1-2,1.1c-0.1,0-0.3,0-0.4,0c-1.5,0-3.4-0.9-5.5-2.6c-2.4-2-3.8-2.7-4.3-2.9l-7.9,7.9c-1.1,1.1-1.7,3.6-1.9,7.6l0,0.2l0,0.1l0,0l0,0.2c0,0.8,0,1.5,0,2.3c0,1.1,0.6,1.9,1.2,2.6c0.7,0.9,1.4,1.8,0.8,3c-0.6,1.3-1.9,2.2-3.2,2.4C312.2,315.4,312,315.4,311.8,315.4z"
 }];
 
-const iransSeasProperties = [{
+var iransSeasProperties = [{
   id: "b47",
   parentId: "a1",
   name: "khazar",
@@ -1412,7 +1449,7 @@ const iransSeasProperties = [{
   d: "M269.3,730.4l-1.1,1.9l-1.6,1.5l-3.5,2.3l-1.5,1.6l-2.4,3.4l-1.1,1.1l-2.7,2.1l-0.7,0.3l-0.1,0.1l0.4,0.4l0.7,0.3l0.6,0.1l2.3-0.5l2.2-0.1l0.8-0.2l1-0.6l0.1,0.8l-0.7,1.6l-0.3,1.2l0.4,0.9l0.8,0.3l1.9-0.1l1.5-0.5l3.7-2.7l1.2-1.2l0.5-0.1l0.7,0.7l1,1.5l0.9,0.8l0.6,0.2l2.5-0.1l0.2,0.1l-0.3,3.9l0.1,2.2l1.8,4.8v1.1l-0.1,1.1l3,10l1,2.3l2.9,4.6l0.9,0.8l2.3,0.8l0.1,1l-0.2,1.4l-0.1,1.4l0.5,1.3l1.6,2.4l0.4,0.8l0.6,1l1.3,0.6l2.5,0.5l-0.6,1.1l-0.3,1.2l0.1,1.3l0.4,1.1l-0.9-0.6l-0.3-0.3l-0.1,0.6v0.3l0.3,0.3l0.6,0.3l-0.5,0.5l-0.3,0.2l-0.2-0.1l-0.2-0.2h-0.4l-0.1,1.4l0.5,0.4l0.8-0.4l0.8-0.9l0.1,0.7l0.3,3.3l0.2,0.9l0.4,0.9l0.9,1.3l0.7,0.7l1.4,1.6l0.8,0.5l1.5,0.7l0.2,0.5l0.5,3.1v2.3l-0.5,1.5l-1.3-0.5l-0.3,0.5l-0.1,0.2v0.2l1.1,0.1l1-0.2l0.7-0.7l0.4-1l0.7,0.4l-0.1,0.6l-0.6,1.3l-0.4,1.8v0.8l0.3,1.7l0.7,1.3l4.9,5.7l0.3,0.8l-0.8,1.3l-0.5,1.3v1.4l0.3,1.4l0.6,1.1l1.9,2.7l0.3,0.7v0.8l-0.1,0.3l0.9,0.6l2,0.9l0.6,0.1l2-0.1l0.6,0.2l1.1,0.7l0.7,0.1l0.3,0.2l-0.1,0.4l-0.1,0.5l-0.3,0.3l-0.3,0.2H318l-0.5-0.2l-1,0.5l-0.2,0.5v1l0.6,0.9l1.2,1.2l1.3,1.1l1.1,0.5v0.3l1.3,2.1l2.4,2.5l0.3,0.6l-0.5,1.4l-0.1,0.9v0.8l0.2,0.4l-0.1,0.5l-0.5,1.1l-0.8,1.1l-0.8,0.6l0.5-0.8v-0.6l-0.1-1.7l0.2-0.9l0.3-0.6l0.2-0.6l-0.3-0.9l-0.8,0.9l-1,2.6l-1,0.7l1.1-3l0.1-0.8l-0.2-1.3l-0.5,0.1l-0.5,1l-1.1,4.8l-0.1,1.1l-0.1,0.2l-0.2,0.4l0.1,0.4h0.6l0.4-0.4l0.4-1.1l0.4-0.5v3.1l0.2,0.8l0.6-0.1l0.5-0.6l0.3-0.8l0.4,0.8l0.1,0.9l-0.1,1.2l0.7,0.3l0.6-0.4l0.4-0.6l0.3-0.7l0.1,1.2l-0.2,0.4l-0.3,0.3l0.3,0.6v0.4l-0.4,0.3h-0.7l0.6,1.5l0.2,0.4l-1.4-0.7h-0.6l-0.4,0.7l1.2,0.6l1.1-0.1l0.8-0.6l0.5-1.3h0.4l0.4,1l-0.7,0.8l-0.2,1.3l0.3,1.1l1,0.1l0.5-0.5l-0.3-0.5l-0.4-0.5l-0.2-0.5l0.5-0.6l0.6-0.3l1.4-0.4l1.1-0.1l0.8,0.4l2.1,2l2.1,1.2l0.6,0.8l-1.1,0.9l0.8,0.4l0.7-0.1l0.4-0.5l-0.3-0.8l1,0.5l1,0.3l2.2,0.2l0.5-0.2l1-0.6l0.5-0.2l0.6,0.1l1.2,0.4h0.6l1.2,0.4l0.9,0.9l1.3,2l0.5,0.4l0.4,0.2l0.4,0.3l0.3,0.5l0.2,0.6l0.1,1.2l0.2,0.6h-0.8l-0.4-0.3l-0.2-0.7l0.1-0.9H348l-1.2,1.6l-3.2-0.4l-1.2,1.2H342l-0.4-1.2h-1l-2.2,1.2l0.4,0.3l1.3,0.4l0.7,0.3l0.5,0.4l0.4,0.3l0.4,0.4l0.7,0.3l0.4,0.5l0.3,0.3l0.3-0.2l1-1v-0.1l0.3-0.3l0.1-0.4l0.2-0.3l0.4,0.3l0.4,0.4l0.6,0.3l-0.4,0.9l-0.6,0.5l-0.5,0.3l-0.5,0.6l-0.2,0.8v1.8l-0.2,0.8l0.7-0.2l0.6-0.4l0.7-0.5l0.6-0.6l0.7-0.2l0.8,0.2l1.2,0.7l-0.5,1.4l0.2,1.3l0.4,1.3l0.2,1.4l-0.1,3l0.3,1.2l1-0.1v1.3l0.4,0.4l0.6-0.1l0.6-0.7l-0.3-1l0.6-0.7h0.9l0.8,0.8l0.4-0.5l0.3,0.8l-0.2,0.7l-0.3,0.7l-0.2,0.9l-0.2,0.5l-0.5,0.2l-0.6,0.1l-0.7-0.1l0.5,0.8l1.4,0.3l0.5,0.8l0.6-0.4l0.3-0.6l0.7-1.4l0.1,0.3v0.1h0.1l0.2,0.1l-0.6,1.2l0.5,0.2l1.5-0.5l0.9,0.2l1.6,0.7l1,0.1l-1.6-1.8l-0.5-1.1l0.9-0.9l0.7-0.1l0.5,0.4l0.6,0.5l0.5,0.2l0.5-0.3l1.1-1.2l-0.2,1.1l-0.5,1.7l-0.1,1l0.4,1.6l0.3,0.9l0.3,0.3l1.1,0.6l1.1,1.3l3.4,5.6l1.7,2.2l0.5,0.5l1.7,0.7l0.5,0.5l0.9,0.9l0.6,0.5l3.6,1.8l2.3,1.8l1.3,0.1l1.3-0.1l1.5,0.2l1.8,1.1l1.7,1.8l2.9,4.2l1,1.9l4.3,3.3l1,1.1l0.2,1.8l-2.7-2.5l-1.4-1l-3.2-0.4l-0.8-0.3l-0.6-0.8l-0.4-2.5l-0.6,0.4l-0.5,1.2l-0.3,1.1v0.9v0.8l0.2,0.8l0.4,0.6l0.6,0.7l0.2,0.3l-0.3,4.2l0.1,1.2l1.6,5.3l0.6,1.1l1,1l1.1,0.7l5,1.8l1.7,1.6l1,2.4l0.5,3.1l-0.1,7.6l-0.2,1.6l-0.6,1.4l-1.1,0.8l-0.1-1.1l-0.4-0.4l-0.6,0.3l-0.6,0.7l0.4,1.8l-0.1,2.6l-0.5,2.8l-0.5,1.8l-0.9-0.7l-0.3-1v-1.1l-0.1-1l-0.4-0.8l-0.5-0.6l-0.6-0.4l-0.4-0.5l-0.4-0.3h-0.2l-0.2-0.2l-0.1-1.9l-0.1-0.4l-0.3-0.6l-0.4-0.7l-0.7-0.7l-0.8-0.5l-0.7,0.3l-1.5,3.1l-0.5,0.5l-0.6,0.4l0.3,0.9l0.6,0.9l0.3,0.3l0.2,0.6l0.5,0.9l0.1,0.7l-0.2,0.2l-0.4,0.1l-0.4,0.3l-0.2,0.5l0.1,1.1l0.3,0.9v1l-0.4,1.1l1,0.4l0.8-0.6l0.4-1l-0.2-1.2l0.6,0.2l0.4,0.4l0.6,0.9l0.3,0.1l0.3-0.1l0.2,0.1v0.5v0.5l0.1,0.2l0.2,0.1h0.3l1.5,0.3l0.6,1l0.3,1.2l0.7,1.2v0.5l-1.2,1.3l0.6,3.3l1.4,3.5l1.2,2.3l3.5,4.5l1.5,2.7l0.6,3.3h-0.4l-1-3.3l-0.4-0.6l-0.7-0.1l-0.9-0.5l-0.7-0.5l-0.8-1.2l-0.9-0.7l-0.8-0.2l-0.2,1.4l0.4,1l1.5,1.1l0.5,0.7l0.3-0.7l0.1-0.3h0.4l2.2,5l6.7,9.2l1.5,1.4l-0.2-0.9l-0.4-1.1l-0.1-0.8l0.5-0.4l0.6-0.3l0.3,0.1l0.2,1.5l0.3,0.4l0.3,0.2l0.1,0.2l0.5,0.9l1.1,0.6l2,0.6l0.5,0.7l1.1,3.1l-0.4,0.5l0.7,1l0.8,1.9l0.6,2l0.3,1.5v0.8l-0.3,1.6l-0.1,0.9l0.1,0.9l0.3,0.6l0.3,0.5l0.3,1.1l0.8,1.7l0.2,1.1l-0.4,2.8l0.5,2.8l0.5,1.6l0.6,0.8l0.5-1.3l1.5,1.3l1.6,2.2l0.6,1.1l1,1.1l1.2,4.5l1.4,1.1l1.2,1.2l0.5,2.6l0.1,4.2l0.3,0.8l0.5,1.3l0.6,1.1l0.6,0.7l0.9-0.1l1.3-1.3l1.1-0.1l1.5-1.5l0.4-1.8l-0.5-6.6l-0.5-1.7l-2.5-5l-0.2-1.1l0.6-1.9l0.2-1.3l-0.1-1.3l-0.3-0.5l-1.6-1l-0.4-2.4l-0.1-2.5l-0.6-1.7l0.5-1.2l-0.1-1.5l-0.3-1.5l-0.1-1.5l0.5-3.8v-1.4l-0.9-5.2l0.7-3l0.1-1.3l-0.8-0.9l1.6-2.2l1.3,1.5l1.2,2.3l1.6,0.3l-0.9-2.8l-0.3-1.2v-1.2l0.1-0.8l0.2-0.8v-0.9l-0.3-0.8l-0.5-0.4l-1.3-0.2l-0.7-0.4l0.7-0.8l0.8-0.3l0.8-0.1l0.8-0.4l0.2-0.4l0.3-1.1l0.3-0.2l0.4,0.1l0.3,0.7l0.5,0.1l0.3,0.6l-0.1,1.1l-0.4,1.9v1.4v0.5l0.5,1.4l0.3,0.3l0.4,0.4l0.6-0.2l0.1-0.1v-0.4l0.2-1.6v-1.7l0.3-0.7l0.7-0.7l0.4,0.2l0.5,0.5h0.8l0.3-0.5l0.9-2l0.4-0.8l-1.6,0.6l-1.5,0.3l-1.2-0.5l-0.9-1.8l-0.1-1l0.5-3.3l0.1-0.3l0.6-0.5l0.1-0.4l-0.1-0.3l-0.3-0.4v-0.3v-2l0.8,0.2l0.3-0.6l0.1-0.7l0.6-0.4l0.4,0.2l0.3,0.6l0.3,0.8v0.8l0.8-0.5l0.5-1l0.2-1.1l-0.3-1.2l-0.4,0.5l-0.8-1l0.1-1.5l1.5-3.9l0.2-1.3l0.2-3.2l0.5,0.4l0.2,0.2l0.1,0.4h0.4l1.3-4.1l1.2-1.8l1.7-0.8l0.9-0.2l2.4-1l0.5-0.4l0.3-1.1l1.4-1.5l0.3-1l1.1,0.4l1.2-0.4l2.1-1.4l4.7,2.7l0.9,1.1l0.1,1.3l-0.1,1.7v1.5l0.7,0.7l1.1,0.4l0.3,1.2l0.1,1.4l0.3,1.3l0.9,0.9l1.2,0.2l2.5-0.2l1.4,0.1l1.2,0.4l1,0.7l1,0.7l0.8,0.9l0.6,1l0.4,1.3l1,7.5v0.9l-0.2,0.8l-0.4,0.4l-0.4-0.3l-0.3-1l-0.5-0.2l-0.5,0.3l-0.4,0.7l-0.2,0.8l0.1,0.6l0.5,0.5h0.5l0.4-0.5l0.2-0.5l1,1.6l-0.8,1.6l-1.2,0.5l-0.2-1.8l-0.8,0.3l-2,1.1l0.8,0.4l0.9,0.6l0.7,0.7l0.4,0.7l-0.2,1.5l-0.8,0.6l-1,0.3l-0.8,0.4l-0.4-0.2l-0.4-0.2l0.1,3.6l-0.1,1.2l-0.3,0.6l-0.5,0.6l-0.4,0.7l0.2,0.6l2.1,4l0.4,1l0.1,1l-0.4,6.6l0.1,1.5l0.3,0.8l0.7,0.3l3.5,0.6l0.5,0.6l0.5,1.4l0.4,2.4l0.1,5.7l-0.6,7.1l0.3,0.9l-0.5,0.5l-0.9,4.2l-0.8,1.3l-2,2.5l-0.6,1.7l-0.5,0.2l-0.5,0.2l-0.4,0.3l-0.3,0.6l-1.6,6.6l-0.3,0.8l-0.7,0.5l-0.3,1.3l-0.6,3.3h189l-0.4-0.3l-0.3-0.7l-0.1-0.8l-0.3-0.9l0.3-0.5l-0.4-0.3l-0.5-0.5l0.2-1.1l0.5-0.7l2.3-1.7l0.3-0.4l0.3-0.7l0.3-0.4l1.8,0.9l0.1,0.1l0.9-0.2l0.8-0.6l0.3-0.9l-0.8-1.1l6.4-4l2.9-2.2l1.7-1.8l1.2-0.8l2.2-0.8l1-0.6l1.6-1l-0.3-1.5l1.9-0.4l0.3,0.2l4.4-5.5l5.9-8.2l0.3-1.1v-0.9l1.1-1.1l0.9,0.1l0.9,1.4l0.3,0.9l-0.2,1l-0.8,1.2l1.6-0.5l0.3-1.2l-0.4-1.6l-1.2-2.3l-0.1-0.6l0.3-0.6l1.7-2l0.6-0.2h0.8l-0.2-0.8v-0.9l0.4-0.7l0.6-0.4l0.6,0.5l1.2-1l1.9-2.8h0.3l0.3,0.8l0.3,0.1l0.4-0.5l0.2-0.9l0.4,0.5l0.8-2.6l0.6-1.1l0.6-0.6l-0.7-0.4l0.4-0.9l0.7-1l0.4-1.2l0.3-1.2l0.6-1.3l0.9-1.2l1-0.4l-0.5,1.1l-0.6,1l-0.4,0.8l0.4,0.9l0.9,0.4l1.1-0.2l1.3-0.4l1.2-0.2l0.4-0.6l0.9-2.7l0.5-1l1.6-1.8l0.9-0.7l2-0.9l1.5-2.2l0.7-0.6l0.5-0.1l0.7-0.2l0.7-0.4l0.3-0.4l0.3-0.2l1.7-0.5l2.1-1.8l3.2-4.3l1.5-1.5l-0.3,0.6l-0.4,1.4l-0.6,1.3l0.3,0.4l0.4,0.1l0.2-0.2l0.1-1.1l0.6-1.9l0.1-1.3l0.4-0.6l2.4-2.5l0.6-0.7l0.4-0.8l0.4-1l0.2-1.3h-0.4l-0.2,0.7l-0.3,0.5l-0.5,0.4l-0.5,0.3l1.5-2.8l1.2-2.9l1.1-4.4l0.2-0.6l0.3-0.7l0.6-2.4l3.8-6.6l1.5-3.1l0.5-0.6l1-0.5v0.3v1l0.7,1.1l-0.2,0.4l-0.3,1h0.5l0.5-0.7h1.6l0.3-0.5l0.3-0.2l0.8,0.3l0.7,0.8l0.2,1.2l0.4-0.8l0.4,0.1l0.5,0.3l0.7-0.1l1.6-1.2l0.6-0.2l1.8,0.6l0.4-0.1l0.1-0.6l-0.2-0.6l-0.5-0.5l-0.4-0.2l-1.2-0.1H762l-0.5,0.3l-0.3,0.5l-0.6,0.6l-0.7,0.4l-0.6-0.3l-0.1-0.7l0.5-2.9V959l1.7,1.4l0.8,0.3l0.3-1l-0.3-0.5l-0.6-0.7l-0.8-0.6l-0.7-0.3l0.2-0.6l0.3-0.1h0.4l0.3-0.3l0.8-0.9l0.3-0.8l-0.1-1.5l0.2-1h0.4l0.8,1.8l0.9-0.6l0.3-0.3l0.4,0.5l-0.3,0.5v0.2l0.1,0.2l0.2,0.5l0.6-0.5l0.3,0.2l0.3,0.4l0.4,0.4l1.4,0.4l0.7,0.1l0.7-0.1l-0.1-0.3l-0.2-0.8l-0.1-0.3l1.2-0.5l0.6,1.8l-0.1,0.7h-0.8l-1.5-0.1l-1,0.4l-1.7,1.7l-1,0.6h0.1l-0.1,0.4l-0.5,0.8l1.3,1.4l0.7,0.6l0.8,0.3l0.5-0.3l0.6-0.6l0.7-0.1l0.6,1l-1.1,2l-0.5,0.3l-0.4-1.4l-0.6,0.1l-0.6-0.1l0.2,0.7l0.1,0.4l-0.1,0.4l-0.2,0.4l0.7,0.8l0.9,0.6l0.8,0.7l0.4,1.3l-0.7-0.1l-0.6-0.1l-0.6-0.4l-0.5-0.4l-0.8,0.4l-0.7-0.3l-0.5-0.9v-1.1l-0.4,0.3l-0.9,0.4l-0.3,0.2v-0.7l0.1-0.6l0.3-0.4l0.4-0.2l-1.3-0.2l-1.5,0.9l-0.8,1.3l0.4,0.9l-0.3,0.7l-0.1,0.9l0.1,0.8l0.3,0.9l0.5-1.4l0.5-0.7l0.6-0.2l0.4,0.4v0.8l-0.1,0.9l-0.3,0.7l1.1,0.5l5.3-0.1l-0.5,0.9l-0.9,0.8l-1.8,1.2l-1.7,0.7l-0.5,0.6l0.2,1.1l1.4-0.8l0.9,0.7v1.3l-1.4,1l0.3,0.7l0.8,1.1l0.2,0.5l0.5,0.3l1.3,0.4l-0.4,0.3l-0.2,0.2l-0.2,0.9l-0.9-0.5l-0.9-0.3l-0.9,0.2l-0.5,0.6l0.9,1.7l-0.4,1.5l-1,1.4l-0.7,1.5l-0.1,0.5l0.1,1.7l-1.2,1.2l-0.9,1.8l-0.7,0.9l-0.8,0.6v-1.5l-0.8,1.5l-0.9,2.2l-0.4,2.5l0.4,2.3l0.3,0.9l1.3,0.7l1.3,0.6l1,0.2l0.5,0.8l1.3,4.7l-0.4,6.4l0.3,2.5l-0.1,0.5l-0.5,0.9l0.1,0.6l0.6,1.1l0.2,0.7l0.3,0.5l0.2,0.5l0.1,0.9l-0.1,0.8l-0.2,1.4l-0.2,2l-0.6,3l-0.2,10.5l1.2,5.5l1.3,5.6l3.8,8.4l0.6,0.7l0.4,1.6l0.4,2.9l0.9,1.8H1200v-47.8l-0.8-0.2l-0.6-0.1l-0.8-0.2l-0.8-0.3l-2.2-0.4l-2.3-0.3l-2.4,0.2l-3.8,0.6l-1.9,0.7l-1.1,0.6l-1,0.8l-1.6,1.9l-0.8,1.8l-0.6,0.5l-1-0.4l0.3,1.1l0.5,0.9l1.7,2.3l0.3,0.3l0.1,0.1v0.5l-0.2,0.5l-0.2,0.5l-0.3,0.3l-0.3,0.1l-1.9-0.4l-3.4-1.6l-2-0.3l-4,0.5l-1-0.2l-2.7-1.3l-3.9-1.1l-2-0.2l-1.8,0.4l-3.7,2.1l-1.3,0.3l-5-0.5l-10.1-2.4l-8.2-0.2l-7.6,0.7l-1.3,0.4l-0.8,0.8l0.2,1l1.3,0.6l-1.2,0.5l-1.5-0.5l-1.8,0.5l-1.6,1l-1.2,0.9l-0.6,0.7l-0.7,1l-0.4,1l0.2,1.1l0.6,0.4l1.9,0.3l0.7,0.2l-1.1,1l-2.1,0.1l-2.2-0.4l-1.4-0.7l0.1-0.4l0.3-0.2l0.2-0.1l0.1-0.2l0.6-0.3h0.5l0.4-0.1l0.1-0.8l0.1-1.5v-0.8l-0.3-0.5l-1.1-1.2l-1.2-0.9l-1.3-0.7l-1.4-0.3l-2.1,0.1l-2.8,0.5l-2.5,0.9l-1.4,1.3l-0.2,0.7l-0.2,0.9l0.1,0.9l0.5,0.4l1.5,2.1l-0.6,0.5l-1.3-0.1l-2.6-0.7l-5-0.4l-1.3,0.2l-2.4,1.3l-1.3,0.4l0.6,0.9l-0.2,0.6l-0.5,0.6l-0.6,2l-0.7-0.1l-1.4-0.8l-1,0.1l-1.5,0.7l-0.9,0.2l-0.7-0.2l-0.7-0.6l-0.2-0.8l0.6-0.7l-0.5-0.9l0.3-0.6l1-0.9l0.6-0.8l0.1-0.4l0.1-0.9l0.2-0.8l0.8-1.1l0.2-0.8l-0.1-1l-0.2-0.2l-0.3,0.2l-0.4,0.1l-0.2,0.2l-0.5,0.6l-0.3,0.1l-0.3-0.1l-0.8-0.6l-0.3-0.2l-0.7-0.1l-0.4-0.3l-0.3-0.3l-0.5-0.3h-0.6h-1.9l-1-0.2h-0.6l-0.7,0.2l0,0l-1.4-0.1l-0.3-1l-0.2-1.1l-1-0.8l-0.2-0.4l-0.3-0.3l-0.5,0.4l-0.2,0.4l-0.1,1.2l-0.2,0.4l0.4,0.3l0.5,0.7l0.4,0.3l-1.3-0.1l-0.9-0.4h-1l-1.3,1l1.4,0.5l0.6,0.3l0.5,0.6l-0.3,0.7l-1,1.3l-0.2,0.7v0.4l-0.1,0.2l-0.5,0.5l-0.8,0.5l-3.2,1l0.9,0.6l0.7,0.8l-11.6-2.9l-2.2-0.9l-0.2-0.4l-0.4-1.6l-0.2-0.4l-9.8-3l-9.6-1.7l-8.1-2.1l-5.6-0.7l-0.9-0.6l0.9-0.9l-1.4-2.1l-0.2-1v-3.8l-0.2-0.6l-2.2-2.3l-0.9-0.6l-1-0.1l-1,0.1l-4.1,1.3l-1,0.6l-0.5,1l-0.9,1.1l-0.5,0.8v0.4l0.2,0.5l0.2,1.4l0.3,0.2h0.4l0.6,0.4h0.5l0.3,0.1l0.2,0.5v0.3v0.3v0.1l1.3,2.3l0.3,1h-0.9l-0.7-0.2l-3.4-3.3l-1.2-0.7l-3-0.6l-1.3-0.9l0.6-1.1l0.2-0.2l-0.8-0.5l-1.1-0.1l-2.1,0.1l-1.6,0.3l-0.3,0.2l-0.6,0.6v0.4l0.2,0.3l-0.1,0.5l-0.3,1.3l-0.4,0.4l-1.2-0.8l-0.6-0.3l-2-0.3l-0.5-0.3l-0.6-0.9l-0.1-0.3l0.1-0.8v-0.3l-0.3-0.1l-0.6,0.1h-0.3l-2.3-0.7l-2.5,0.2l-4.8,1.4l-0.4,0.3l-0.3,0.5l-0.4,0.1l-2.3-2.2l-0.2-0.4l-0.4-1.2l-1-0.5l-10.4,1.1h-2.3l-2.4-1.1l-3.5-3.7l-2.5-0.9l-2.7,0.1l-8.3,3.1l-5,0.8l-3.3,1.7l-1.2,0.3l-0.5-0.1l-0.5-0.5l-0.4-0.3l-0.5,0.2l-0.5,0.2l-0.6,0.2l-1.3-0.1l-1.2-0.3l-1-0.4l-0.7-0.7l-2.7-4.6l-1.5-1.9l-2.3-1.1l-2,0.1l-0.5-0.3l-0.4-0.7l-0.2-0.7l-0.3-0.5l-0.7-0.2h-5l-10.6-2.1l-3.7,0.6l-3.1-0.2l-1.1-0.6l0.4-1.1l-1.7,0.1l-1.9,0.4l-0.8,0.5l-1.3,1.2l-0.9,0.2l-0.4-0.2l-0.2-0.2h-0.3l-0.7,0.7l-0.5,0.3l-0.6,0.2l-0.5-0.1l-0.2-0.4l-0.3,0.1l-2.1,1.6l-2.1,0.3l-2-0.4l-1.8-0.6l-1.9-0.3l-1.6-0.8l-1.3-1.9l-1.8-3.9l-1.8-2.4l-2.2-0.5l-2.4,0.6l-2.4,1.3l-2,1.8l-1.3,0.8h-0.9l0.3-3l0.2-0.8l0.1-0.4l0.1-0.2l-0.1-0.6l-0.6-1.6l-0.9-0.8l-1.2-0.3l-1.5-0.1l-1.3,0.1l-3.3,0.8l-0.7-0.1l-1.2-0.7l-0.7-0.1l-0.7,0.1l-1.1,0.3l-0.6,0.1l-1.5-0.2l-4-1.3l0.5-0.4l-7.9-0.6l-0.8-0.5l-0.4-1l-0.4-3.4l-1.4-3.5l-0.7-2.8l-0.5-1.3l-0.6-0.6l-0.1-0.3l-1.3-1.6l-0.3-0.1l-0.7,0.1h-0.2l-0.1-0.3l-0.2-0.8l-0.8-2.5l-0.2-1.2l-0.6-1.3l-0.1-0.8l0.3-1.5l1.9-2.1l0.6-1.4l-0.8-2.2l-3.9-4.5l0.3-1.8l-0.4-0.5l-0.3-3.1l-0.4-1.5l-0.7-1.3l-1.1-1.1l-0.3-0.6l-0.2-0.6l-0.2-1.5v-0.7l1-8.6l-0.2-3.2l-3.8-16.1l-0.8-1.2l-2-1.8l-0.7-1.1l0.1-1.1l-1.8-1.3l-0.6-0.7l0.8,0.1l0.7-0.3l0.6-0.4l0.7-0.3l-0.5-0.5l-0.1-0.6l0.2-0.7l0.4-0.6l-1.8,0.9l-0.6,0.1l-0.6-0.2l-0.3-0.3l-0.2-0.3l-0.3-0.2l-0.3-0.2l-0.3-0.4l-0.4-0.3l-1.2,0.6l-0.3-0.3l-0.2-0.5v-0.7l-0.7,0.1l-0.4-0.3v-0.5l0.6-0.3l0.3-0.2l1-1.2l0.5-0.4v-0.5l-1.7-0.3l-1.4-1l-1-1.4l-0.3-1.6l-0.7,0.7l-0.8,0.3h-1.6l-0.8-0.3l-0.6-0.7l-0.4-0.6l-0.6-0.3l-6.1-0.1l-1.3-0.4l-0.4,0.5l-1.4-0.9l-1.8-0.3l-3.6-0.2l-1.7-0.4l-3.1-1.3l-1.8-0.3l-3.6,0.2l-1.9,0.5l-1.3,1l-1.3,0.7l-3.8,0.1l-1.6,0.4l-0.4,0.3l-1,1l-0.2,0.3l-0.1,0.8l-0.3,0.2l-0.5,0.1l-0.5,0.4l-1,0.9l-3.9,2.5l-1.5,1.2v0.3l-0.3,0.2l-1,1l-0.7,0.2l-2.6,0.4l-2.4,0.6h-0.6h-2l-0.6,0.1l-0.9,0.7l-0.5,0.1h-2.2l-1.9-0.4l-0.5-0.1l-1.2,0.6l-1.9,1.9l-0.8,0.4l-0.6,0.5l-3.2,3.8l0.9-0.3l0.3-0.2l0.5-0.5l0.2,1.7l-0.4,2.1l-0.6,1.9L715,923l-1.9,1.8l-2.2,1.2l-2.4,0.5l-2.7-0.1l-4.7-1.7l-2.7-0.4l-2.2,1.1l-0.7,1.3l-0.3,1.2l-0.6,1l-1.4,0.3l-1.1,0.2l-2.6,0.8l-0.9,0.4l-3.8,3.6l-0.7,0.4l-5.6,4.9l-6.3,3.9l-0.4,0.4l-0.4,0.4l-0.4,0.4l-0.7,0.2l-0.7-0.2l-1-0.6l-0.7-0.1l-5,0.4l-2.6-0.4l-1-1.6l-0.7-2l-1.7-1.7l-2.6-0.5l-5.3,0.2l-2.2-1.1l-1-1.8l-0.9-2.2l-1.1-2.1l-1.7-1.5l-1.3-0.2l-1.1,0.2l-1.2,0.3l-4.4,0.4l-1.3-0.2l-4-1.2l-1-0.2l-0.6-0.2l-1.1-1l-0.5-0.2H625l-1.3,0.2l-3.8,1.9l-2.7,0.4l-2.4,0.7l-1.3,0.1l-2.6-0.9l-1.4-0.1l-1.4,0.7l-0.7-0.2l-3-2.8l-4.4-2.8l-5.7-4.5l-0.9-1.1l-0.3-1.3l-0.1-3.3l-0.5-1.4l-1-1.3l-1.9-1.2l-19.9-7.1l-1.3-0.2l-1.2-0.3l-0.8-1l-0.6-1.1l-0.8-0.9l-3.4-0.9l-0.6-0.7l-0.5-1.5l-1.2-0.8l-2.7-0.8l-4.7-4.5l-2.1-1.5l-7.6-3.5l-1.2-1.4l-0.1-1.4l0.5-0.9l1-0.4l1.2-0.1h1.1l1.3-0.1l0.7-0.7l-0.5-1.6l-0.9-0.9l-2.4-0.9l-0.9-0.8l-0.5-0.8l-0.9-2.3l-0.4-0.7l-4.4-4.7l-1.9-1.6l-2.2-1l-10.4-2.4l-2.2-1.2l-6.9-6.7l-2.2-1.5l-2.4-1.1l-2.8-0.4l-4,0.6l-1-0.3l-1.1-0.8l-1.4-0.4h-2.9l-3.4,0.8l-1.2,0.1l-6.4-0.5l-0.7-0.2l-0.3-0.5l-0.1-0.6l-0.2-0.5l-0.3-0.4l-1.6-0.5l-1.2-1l-2.7-2.9l-0.7-1l-0.6-1.3l-0.2-1.7l-0.6-1.1l-1.5-0.7l-2.7-0.8l-1.2-0.9l-4.1-4.1l-0.5-0.7l-0.2-1l-0.1-1.8l1.3-3.7l-0.1-1.9l-1.2-2l-2-1.9l-0.7-0.9l-2.1-3.4l-1.9-2.1l-0.5-0.7l-3.5-9.2l-0.5-2.2l-0.1-8.8l-0.7-3l-1.3-2.5l-1.5-1.8l-1.9-1.2l-2.5-0.6l-2.4-0.2l-1.1-0.3l-0.5-0.7l-0.5-1.4l-2.7-3.6l-0.5-1.3l-0.3-1.9l0.2-1.7l1.2-0.8l1.1,0.5l1.2,1l0.9,1.2l0.6,1.2l0.6-0.6l-0.1-0.5l-0.2-0.6l0.1-0.7l0.4-0.5l1.2-1.1l0.4-0.8l0.2-1.5l-0.2-1.6l-0.5-1l-1.1,0.3l-0.5-2l-0.4-0.7l-0.7-0.6l-0.4,0.1l-0.5,0.3l-0.5,0.1l-0.2-0.3l-0.1-1.2l-0.1-0.5l-0.2-0.4l-1.4-0.3l-4.6,0.3l-1.1,0.2l-1.5,1l-1.6-0.2l-1.3-1.2l-0.5-1.9l-0.2-1.7l0.2-0.8l0.5-0.9l0.4-0.9l0.4-1.2l0.6-0.5l0.8,1l0.3-2.8l0.1-0.5l-0.5-0.2l-0.4-0.4l-0.7-1.3l0.4-1.7v-2.7l-0.3-2.7l-0.5-1.9l-0.7-1.4l-1.2-1.7l-0.9-0.4v2.1l-0.3-0.8l-1.7-2.6l-3.1-2.6l-0.5-0.9l-0.4-1.2l-0.9-1.3l-1.9-2l-3.5-1.4l-0.5-0.7l-0.4-1.4l-0.8-1.3l-1.6-1.8l-1.6-2.4l-2.6-5l-1.4-2.1l-1.1-1l-2.5-1.5l-2.2-2.4l-0.2-0.3l-0.2-0.8l-0.1-1.3l-0.2-0.7l0.9-0.1l0.3-0.4l-0.4-0.5l-0.8-0.4l0.7-2.4l-1.4-3.9l0.4-1.8l-0.9-0.7l-0.9-1.2l-0.8-1.4l-0.3-1.2l-0.3-0.7l-0.9-0.6l-2-0.8l-2.1-0.3l-2.2,0.4l-2.1,0.7l-18.4,12.1l-2.1,0.9l-1.9-0.5l-1.6-2.4l-0.2-1.1v-3.2l-0.5-1.2l-0.4-0.6l-0.1-0.4l-0.3-0.2l-0.6-0.4l-0.6-0.3l-0.5-0.1l-1.3-0.1l-0.6,0.1l-1.3,0.3l-0.7,0.1l-0.6-0.2l-0.9-0.6l-0.5-0.2l-1.2,0.2l-2.2,1l-1.2,0.2l-1.5-0.1l-0.6-0.6l0.1-2.8l-0.1-0.2l-0.9-0.6l-0.2-0.4v-0.4v-1l0.1-0.6l0.2-0.4v-0.4l-0.7-0.5l-0.3,1.2l-0.7,1.1l-0.8,0.8l-1,0.2l-1.1-0.7l-0.5-0.9l-0.6-0.7l-1-0.1l-1.4-0.5l-3.8-2.3l-0.8-0.7l-0.4-2.3l-1.1-1.4l-1.5-0.8l-1.9-0.5l0.7-1.1l0.9-0.3l2.4,0.4h1.3l1.9-0.7l1.1-0.2l1.2,0.3l2.4,1.3l0.8,0.3l1.3,0.2l1,0.4l0.8,0.7l0.7,1.1l0.4-0.9l1.1-2.1l1.7-2.2l0.3-0.7l0.1-1.2l-1.2,0.2l-0.9-0.6l-0.5-1l-0.5-2.5l-0.7,0.3l-0.9,1l-0.9,0.7l0.1-0.9l0.1-0.2l0.2-0.3l-0.5-0.8l-0.5,0.1l-0.6,0.5l-0.8,0.2l-0.4-0.3l-0.6-0.9l-0.4-0.2h-0.4l-0.5,0.4h-0.3l-1.2-0.2l-1-0.3h-1l-1,0.5l-2.1-0.3l-1.7,1.1l-0.4,1.4l1.6,0.7l1.8,0.4l1.5,0.9l0.4,1.3l-1.1,1.2h-1l-3.2-0.5l-0.7,0.2l-3.2,3.1l-0.2,0.3l-0.5,0.8l-0.3,0.9l0.7,0.6l-0.3,0.5l-0.4,0.5l-0.2,0.4l0.5,1.5l1,1l1.2,1l0.9,1l0.5,1.3l0.4,1.5l0.3,3.1l-0.1,0.9l-0.5,1.4l-0.2,0.8l0.1,0.7l0.3,1.3v0.8l-0.3,1.4l-0.8,1.2l-1.1,0.9l-1.2,0.3l-3.9-0.4l-1.1,0.4l-1.1-0.5h-4.1l-2.5-1.4l-0.9-0.2l-0.2,1.2l0.3,0.8l0.8,1.3l0.1,1l-0.1,0.7l-0.5,0.6l-0.5,0.4l-0.5,0.4l-1.3,0.4l-4.3-0.4v-0.5l-0.3,0.4l-0.1,0.2v0.4l1.4-0.1l0.3,0.7l-0.8,0.8l-1.5,0.4l-6.4-0.6l-4.4-1.6l-2.1-1.6l-2.1-0.7l-3.2-2.1l-2.6-0.9l-2.7-0.5h-2.5l-2.2,0.6l-4.1,2.3l-0.4-1.9l-0.2-2.1l-0.4-1.9l-1-1.3l0.7,2.3l0.1,0.8l-0.1,0.9l-0.3,0.9v0.7l0.4,0.6v1.6l0.4,1.2l0.6,1.1l0.6,1.3l0.2,1.5v2.5l0.2,1.7l0.8,2.2l1.5,3.3l1.8,2.6l1.5-0.1l1,3.1l1.4,3.1l2.5,3.6l0.4,1.6l-0.5,1.5l-1.3,0.5l-1.4-0.3l-1.3-0.8l-0.4-0.6l-0.1-0.7l-0.3-0.6l-0.8-0.4l-0.9-0.1h-0.8l-0.8-0.1l-0.7-0.8h1.2l-0.7-1l-1.4-0.4l-1.3-0.1l-0.6,0.3L269.3,730.4"
 }];
 
-const iransIslandsProperties = [{
+var iransIslandsProperties = [{
   id: "b34",
   parentId: "a1",
   name: "khark",
@@ -1544,7 +1581,7 @@ const iransIslandsProperties = [{
   points: "693.7,963.1 693.5,963.4 693,963.5 692.8,963.2 692.6,962.6 693,962.4 693.5,962.3 693.8,962.7 	"
 }];
 
-const IranMap = props => {
+var IranMap = function IranMap(props) {
   return /*#__PURE__*/React.createElement("div", {
     style: {
       height: props.height,
@@ -1565,91 +1602,116 @@ const IranMap = props => {
     }
   }, /*#__PURE__*/React.createElement("g", {
     id: "provinces"
-  }, iransStatesProperties.map((iranState, index) => /*#__PURE__*/React.createElement("path", {
-    key: index,
-    id: iranState.persianName,
-    onClick: () => props.onClick(iranState),
-    "data-tip": `${props.data[iranState.name]}`,
-    "data-for": `${iranState.name}Tooltip`,
-    fill: props.selectedArea === iranState.name ? props.selectedAreaColor : `rgba(${props.defaultAreasColor},${props.data[iranState.name] / props.maxValue}`,
-    stroke: "#9B9B9B",
-    style: {
-      cursor: 'pointer'
-    },
-    d: iranState.d
-  })), iransSeasProperties.map((iranSea, index) => /*#__PURE__*/React.createElement("path", {
-    key: index,
-    id: iranSea.persianName,
-    onClick: () => props.onClick(iranSea),
-    "data-tip": `${props.data[iranSea.name]}`,
-    "data-for": `${iranSea.name}Tooltip`,
-    fill: props.selectedArea === iranSea.name ? props.selectedAreaColor : '#00BDFF',
-    stroke: "#9B9B9B",
-    style: {
-      cursor: 'pointer'
-    },
-    d: iranSea.d
-  }))), /*#__PURE__*/React.createElement("g", {
+  }, iransStatesProperties.map(function (iranState, index) {
+    return /*#__PURE__*/React.createElement("path", {
+      key: index,
+      id: iranState.persianName,
+      onClick: function onClick() {
+        return props.onClick(iranState);
+      },
+      "data-tip": "" + props.data[iranState.name],
+      "data-for": iranState.name + "Tooltip",
+      fill: props.selectedArea === iranState.name ? props.selectedAreaColor : "rgba(" + props.defaultAreasColor + "," + props.data[iranState.name] / props.maxValue,
+      stroke: "#9B9B9B",
+      style: {
+        cursor: 'pointer'
+      },
+      d: iranState.d
+    });
+  }), iransSeasProperties.map(function (iranSea, index) {
+    return /*#__PURE__*/React.createElement("path", {
+      key: index,
+      id: iranSea.persianName,
+      onClick: function onClick() {
+        return props.onClick(iranSea);
+      },
+      "data-tip": "" + props.data[iranSea.name],
+      "data-for": iranSea.name + "Tooltip",
+      fill: props.selectedArea === iranSea.name ? props.selectedAreaColor : '#00BDFF',
+      stroke: "#9B9B9B",
+      style: {
+        cursor: 'pointer'
+      },
+      d: iranSea.d
+    });
+  })), /*#__PURE__*/React.createElement("g", {
     id: "islands"
-  }, iransIslandsProperties.map((iranIsland, index) => /*#__PURE__*/React.createElement("polygon", {
-    key: index,
-    id: iranIsland.persianName,
-    onClick: () => props.onClick(iranIsland),
-    "data-tip": `${props.data[iranIsland.name]}`,
-    "data-for": `${iranIsland.name}Tooltip`,
-    fill: props.selectedArea === iranIsland.name ? props.selectedAreaColor : `rgba(${props.defaultAreasColor},${props.data[iranIsland.name] / props.maxValue}`,
-    stroke: "#9B9B9B",
-    points: iranIsland.points
-  }))), iransStatesProperties.map((iranState, index) => /*#__PURE__*/React.createElement("text", {
-    key: index,
-    textAnchor: "start",
-    x: `${iranState.ltrX}`,
-    y: `${iranState.ltrY}`,
-    onClick: () => props.onClick(iranState),
-    fill: props.selectedArea === iranState.name ? props.selectedAreaTextColor : '#000',
-    style: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transform: `rotate(${iranState.ltrRotate}deg)`,
-      letterSpacing: 'normal'
-    },
-    "data-tip": `${props.data[iranState.name]}`,
-    "data-for": `${iranState.name}Tooltip`
-  }, iranState.persianNickName)), iransSeasProperties.map((iranSea, index) => /*#__PURE__*/React.createElement("text", {
-    key: index,
-    textAnchor: "start",
-    x: `${iranSea.ltrX}`,
-    y: `${iranSea.ltrY}`,
-    fill: props.selectedArea === iranSea.name ? props.selectedAreaTextColor : '#000',
-    onClick: () => props.onClick(iranSea),
-    style: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transform: `rotate(${iranSea.ltrRotate}deg)`,
-      letterSpacing: 'normal'
-    },
-    "data-tip": `${props.data[iranSea.name]}`,
-    "data-for": `${iranSea.name}Tooltip`
-  }, iranSea.persianNickName))), iransStatesProperties.map((state, index) => /*#__PURE__*/React.createElement(ReactTooltip, {
-    key: index,
-    id: `${state.name}Tooltip`,
-    textColor: "#000000FF",
-    backgroundColor: "#FFFFFFFF"
-  })), iransIslandsProperties.map((island, index) => /*#__PURE__*/React.createElement(ReactTooltip, {
-    key: index,
-    id: `${island.name}Tooltip`,
-    textColor: "#000000FF",
-    backgroundColor: "#FFFFFFFF"
-  })), iransSeasProperties.map((island, index) => /*#__PURE__*/React.createElement(ReactTooltip, {
-    key: index,
-    id: `${island.name}Tooltip`,
-    textColor: "#000000FF",
-    backgroundColor: "#FFFFFFFF"
-  })));
+  }, iransIslandsProperties.map(function (iranIsland, index) {
+    return /*#__PURE__*/React.createElement("polygon", {
+      key: index,
+      id: iranIsland.persianName,
+      onClick: function onClick() {
+        return props.onClick(iranIsland);
+      },
+      "data-tip": "" + props.data[iranIsland.name],
+      "data-for": iranIsland.name + "Tooltip",
+      fill: props.selectedArea === iranIsland.name ? props.selectedAreaColor : "rgba(" + props.defaultAreasColor + "," + props.data[iranIsland.name] / props.maxValue,
+      stroke: "#9B9B9B",
+      points: iranIsland.points
+    });
+  })), iransStatesProperties.map(function (iranState, index) {
+    return /*#__PURE__*/React.createElement("text", {
+      key: index,
+      textAnchor: "start",
+      x: "" + iranState.ltrX,
+      y: "" + iranState.ltrY,
+      onClick: function onClick() {
+        return props.onClick(iranState);
+      },
+      fill: props.selectedArea === iranState.name ? props.selectedAreaTextColor : '#000',
+      style: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transform: "rotate(" + iranState.ltrRotate + "deg)",
+        letterSpacing: 'normal'
+      },
+      "data-tip": "" + props.data[iranState.name],
+      "data-for": iranState.name + "Tooltip"
+    }, iranState.persianNickName);
+  }), iransSeasProperties.map(function (iranSea, index) {
+    return /*#__PURE__*/React.createElement("text", {
+      key: index,
+      textAnchor: "start",
+      x: "" + iranSea.ltrX,
+      y: "" + iranSea.ltrY,
+      fill: props.selectedArea === iranSea.name ? props.selectedAreaTextColor : '#000',
+      onClick: function onClick() {
+        return props.onClick(iranSea);
+      },
+      style: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        transform: "rotate(" + iranSea.ltrRotate + "deg)",
+        letterSpacing: 'normal'
+      },
+      "data-tip": "" + props.data[iranSea.name],
+      "data-for": iranSea.name + "Tooltip"
+    }, iranSea.persianNickName);
+  })), iransStatesProperties.map(function (state, index) {
+    return /*#__PURE__*/React.createElement(ReactTooltip, {
+      key: index,
+      id: state.name + "Tooltip",
+      textColor: "#000000FF",
+      backgroundColor: "#FFFFFFFF"
+    });
+  }), iransIslandsProperties.map(function (island, index) {
+    return /*#__PURE__*/React.createElement(ReactTooltip, {
+      key: index,
+      id: island.name + "Tooltip",
+      textColor: "#000000FF",
+      backgroundColor: "#FFFFFFFF"
+    });
+  }), iransSeasProperties.map(function (island, index) {
+    return /*#__PURE__*/React.createElement(ReactTooltip, {
+      key: index,
+      id: island.name + "Tooltip",
+      textColor: "#000000FF",
+      backgroundColor: "#FFFFFFFF"
+    });
+  }));
 };
-
 IranMap.propTypes = {
   height: propTypes.number.isRequired,
   backgroundColor: propTypes.string,
@@ -1661,7 +1723,7 @@ IranMap.propTypes = {
   unselectedAreaTextColor: propTypes.string
 };
 
-const testData = {
+var testData = {
   alborz: 10,
   ardebil: 20,
   azerbaijansharghi: 30,
@@ -1710,39 +1772,48 @@ const testData = {
   tonbekuchak: 53
 };
 
-const InteractiveIranMap = ({
-  data: _data = testData,
-  height: _height = 600,
-  defaultAreasColor: _defaultAreasColor = '255,0,0',
-  selectedAreaColor: _selectedAreaColor = '#00f',
-  selectedAreaTextColor: _selectedAreaTextColor = '#fff',
-  unselectedAreaTextColor: _unselectedAreaTextColor = '#000',
-  backgroundColor: _backgroundColor = '#fff',
-  defaultSelectedArea: _defaultSelectedArea = 'tehran'
-}) => {
-  const [state, setState] = React.useState({
-    selectedArea: _defaultSelectedArea
-  });
-
-  const selectAreaHandler = area => {
-    setState(prevState => ({ ...prevState,
-      selectedArea: area.name
-    }));
+var InteractiveIranMap = function InteractiveIranMap(_ref) {
+  var _ref$data = _ref.data,
+    data = _ref$data === void 0 ? testData : _ref$data,
+    _ref$height = _ref.height,
+    height = _ref$height === void 0 ? 600 : _ref$height,
+    _ref$defaultAreasColo = _ref.defaultAreasColor,
+    defaultAreasColor = _ref$defaultAreasColo === void 0 ? '255,0,0' : _ref$defaultAreasColo,
+    _ref$selectedAreaColo = _ref.selectedAreaColor,
+    selectedAreaColor = _ref$selectedAreaColo === void 0 ? '#00f' : _ref$selectedAreaColo,
+    _ref$selectedAreaText = _ref.selectedAreaTextColor,
+    selectedAreaTextColor = _ref$selectedAreaText === void 0 ? '#fff' : _ref$selectedAreaText,
+    _ref$unselectedAreaTe = _ref.unselectedAreaTextColor,
+    unselectedAreaTextColor = _ref$unselectedAreaTe === void 0 ? '#000' : _ref$unselectedAreaTe,
+    _ref$backgroundColor = _ref.backgroundColor,
+    backgroundColor = _ref$backgroundColor === void 0 ? '#fff' : _ref$backgroundColor,
+    _ref$defaultSelectedA = _ref.defaultSelectedArea,
+    defaultSelectedArea = _ref$defaultSelectedA === void 0 ? 'tehran' : _ref$defaultSelectedA;
+  var _React$useState = React.useState({
+      selectedArea: defaultSelectedArea
+    }),
+    state = _React$useState[0],
+    setState = _React$useState[1];
+  var selectAreaHandler = function selectAreaHandler(area) {
+    setState(function (prevState) {
+      return _extends({}, prevState, {
+        selectedArea: area.name
+      });
+    });
   };
-
-  let arr = Object.values(_data);
-  let max = Math.max(...arr);
+  var arr = Object.values(data);
+  var max = Math.max.apply(Math, arr);
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(IranMap, {
     onClick: selectAreaHandler,
-    height: _height,
-    data: _data,
+    height: height,
+    data: data,
     maxValue: max,
     selectedArea: state.selectedArea,
-    defaultAreasColor: _defaultAreasColor,
-    selectedAreaColor: _selectedAreaColor,
-    selectedAreaTextColor: _selectedAreaTextColor,
-    unselectedAreaTextColor: _unselectedAreaTextColor,
-    backgroundColor: _backgroundColor
+    defaultAreasColor: defaultAreasColor,
+    selectedAreaColor: selectedAreaColor,
+    selectedAreaTextColor: selectedAreaTextColor,
+    unselectedAreaTextColor: unselectedAreaTextColor,
+    backgroundColor: backgroundColor
   }));
 };
 
